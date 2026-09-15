@@ -1,0 +1,678 @@
+/* ---------------------------------------------------------
+   Fortune Cookie — design tokens
+--------------------------------------------------------- */
+:root {
+  --bg: #FFF6E8;
+  --bg-deep: #FFE3B8;
+  --ink: #2B1E3D;
+  --ink-soft: #6C5A80;
+  --ink-faint: #A398B0;
+
+  --cookie-light: #F6CC7E;
+  --cookie-mid: #E4A430;
+  --cookie-dark: #B0701B;
+  --cookie-shadow: #7C4A10;
+
+  --paper: #FFFDF6;
+  --paper-line: #F0E2C4;
+
+  /* Playful palette — reused across accents, confetti, and moment themes */
+  --coral: #FF6B5E;
+  --tangerine: #FF9F1C;
+  --gold: #FFC53D;
+  --teal: #14B8A6;
+  --violet: #7C5CFC;
+  --pink: #FF6FA5;
+  --sky: #3FA9F5;
+
+  --accent: var(--coral);
+  --accent-2: var(--tangerine);
+  --accent-soft: #FFB6AC;
+  --accent-tint: #FFE6E1;
+
+  /* Landing hero — bold solid backdrop, separate from the softer inner-screen bg */
+  --hero-bg: #FF5247;
+  --hero-bg-deep: #F03A45;
+  --hero-ink: #FFF9EF;
+  --hero-ink-soft: rgba(255, 249, 239, 0.82);
+
+  --shadow-soft: 0 20px 45px -20px rgba(90, 58, 22, 0.35);
+  --shadow-deep: 0 30px 60px -20px rgba(60, 35, 10, 0.4);
+
+  --font-display: "Fraunces", Georgia, serif;
+  --font-ui: "Work Sans", system-ui, sans-serif;
+
+  --ease: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* Moment-based color themes — set via body[data-moment] in script.js */
+body[data-moment="morning"] {
+  --accent: var(--gold);
+  --accent-2: var(--teal);
+  --accent-soft: #FFDD8A;
+  --accent-tint: #FFF3D6;
+}
+
+body[data-moment="bad_day"] {
+  --accent: var(--violet);
+  --accent-2: var(--pink);
+  --accent-soft: #C6B7FF;
+  --accent-tint: #EEE8FF;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  height: 100%;
+}
+
+body {
+  font-family: var(--font-ui);
+  color: var(--ink);
+  background: radial-gradient(120% 100% at 50% 0%, var(--bg-deep) 0%, var(--bg) 55%);
+  min-height: 100svh;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+  transition: background-color 500ms ease;
+}
+
+/* Landing gets a bold solid backdrop instead of the soft cream — this is the
+   first thing people see, so it does the work of pulling them in. */
+body[data-screen="landing"] {
+  background: radial-gradient(140% 120% at 50% -10%, var(--hero-bg) 0%, var(--hero-bg-deep) 100%);
+  color: var(--hero-ink);
+}
+
+.sky {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  transition: background 600ms ease;
+  background:
+    radial-gradient(38rem 22rem at 12% -6%, rgba(255, 197, 61, 0.35), transparent 60%),
+    radial-gradient(30rem 20rem at 100% 10%, rgba(124, 92, 252, 0.16), transparent 60%),
+    radial-gradient(26rem 18rem at 15% 100%, rgba(255, 111, 165, 0.14), transparent 60%);
+}
+
+.sky::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  opacity: 0.55;
+  background-image:
+    radial-gradient(circle, var(--coral) 3px, transparent 3.5px),
+    radial-gradient(circle, var(--teal) 2.5px, transparent 3px),
+    radial-gradient(circle, var(--gold) 3px, transparent 3.5px),
+    radial-gradient(circle, var(--violet) 2.5px, transparent 3px),
+    radial-gradient(circle, var(--pink) 2.5px, transparent 3px);
+  background-size: 220px 220px, 260px 260px, 300px 300px, 240px 240px, 280px 280px;
+  background-position: 5% 8%, 85% 18%, 30% 82%, 70% 65%, 12% 55%;
+  background-repeat: repeat;
+  -webkit-mask-image: radial-gradient(120% 100% at 50% 0%, black 0%, transparent 72%);
+  mask-image: radial-gradient(120% 100% at 50% 0%, black 0%, transparent 72%);
+  transition: opacity 400ms ease;
+}
+
+/* On the bold coral landing screen, swap the pastel confetti for a quieter
+   white sparkle so it reads as texture, not clutter, against a strong color. */
+body[data-screen="landing"] .sky::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  opacity: 0.16;
+  background-image: radial-gradient(circle, #FFFFFF 2.5px, transparent 3px);
+  background-size: 90px 90px;
+  background-position: 10% 15%;
+}
+
+body[data-screen="landing"] .sky::after {
+  opacity: 0;
+}
+
+button {
+  font-family: inherit;
+  cursor: pointer;
+}
+
+/* ---------------------------------------------------------
+   Layout / screens
+--------------------------------------------------------- */
+.app {
+  position: relative;
+  z-index: 1;
+  min-height: 100svh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6vh 1.5rem 4vh;
+}
+
+.screen {
+  width: 100%;
+  max-width: 620px;
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  position: relative;
+}
+
+.screen.active {
+  display: flex;
+  animation: rise 560ms var(--ease) both;
+}
+
+@keyframes rise {
+  from { opacity: 0; transform: translateY(14px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ---------------------------------------------------------
+   Landing
+--------------------------------------------------------- */
+.wordmark {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-family: var(--font-ui);
+  font-weight: 600;
+  font-size: 0.85rem;
+  letter-spacing: 0.02em;
+  color: var(--hero-bg-deep);
+  background: var(--hero-ink);
+  padding: 0.45rem 0.9rem 0.45rem 0.7rem;
+  border-radius: 999px;
+  margin: 0 0 2.4rem;
+  box-shadow: 0 10px 24px -12px rgba(60, 10, 8, 0.45);
+}
+
+.wordmark-emoji {
+  font-size: 1rem;
+  line-height: 1;
+}
+
+.tagline {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-style: normal;
+  font-size: clamp(2rem, 6.4vw, 3.1rem);
+  line-height: 1.12;
+  color: var(--hero-ink);
+  max-width: 15ch;
+  margin: 0 0 1rem;
+}
+
+.hero-sub {
+  font-family: var(--font-ui);
+  font-weight: 400;
+  font-size: clamp(0.98rem, 2.4vw, 1.08rem);
+  line-height: 1.55;
+  color: var(--hero-ink-soft);
+  max-width: 34ch;
+  margin: 0 0 3rem;
+}
+
+.question {
+  font-family: var(--font-ui);
+  font-weight: 500;
+  font-size: clamp(1rem, 2.6vw, 1.15rem);
+  color: var(--ink-soft);
+  margin: 0 0 1.6rem;
+}
+
+.screen--landing .question {
+  color: var(--hero-ink);
+}
+
+.question--alone {
+  margin-top: 1.5rem;
+}
+
+/* ---------------------------------------------------------
+   Choice cards
+--------------------------------------------------------- */
+.choice-row {
+  display: flex;
+  gap: 1rem;
+  width: 100%;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.choice-card {
+  --card-accent: var(--coral);
+  --card-accent-2: var(--tangerine);
+  flex: 1 1 200px;
+  max-width: 240px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.9rem;
+  padding: 2rem 1.25rem;
+  background: var(--paper);
+  border: 1px solid var(--paper-line);
+  border-top: 4px solid var(--card-accent);
+  border-radius: 22px;
+  color: var(--ink);
+  box-shadow: var(--shadow-soft);
+  transition: transform 260ms var(--ease), box-shadow 260ms var(--ease), border-color 260ms var(--ease);
+}
+
+.choice-card:hover {
+  transform: translateY(-4px);
+  border-color: var(--card-accent);
+  box-shadow: 0 24px 40px -18px color-mix(in srgb, var(--card-accent) 55%, transparent);
+}
+
+.choice-card:focus-visible {
+  outline: 2px solid var(--card-accent);
+  outline-offset: 3px;
+}
+
+.choice-card:active {
+  transform: translateY(-1px) scale(0.99);
+}
+
+.choice-icon {
+  width: 38px;
+  height: 38px;
+  color: var(--card-accent);
+}
+
+.choice-label {
+  font-family: var(--font-display);
+  font-size: 1.15rem;
+  font-weight: 500;
+}
+
+.choice-row--three .choice-card {
+  padding: 1.5rem 1rem;
+  flex-basis: 150px;
+}
+
+.choice-card--pref .choice-label {
+  font-size: 1.05rem;
+}
+
+/* Per-choice accent colors — give each option its own personality */
+.choice-card--morning { --card-accent: var(--gold); --card-accent-2: var(--teal); }
+.choice-card--badday { --card-accent: var(--violet); --card-accent-2: var(--pink); }
+.choice-card--him { --card-accent: var(--sky); }
+.choice-card--her { --card-accent: var(--pink); }
+.choice-card--everyone { --card-accent: var(--tangerine); }
+
+/* On the bold coral landing screen, give cards a deeper, warmer shadow so
+   they read as floating above the color rather than sitting flat on it. */
+.screen--landing .choice-card {
+  box-shadow: 0 22px 40px -16px rgba(60, 10, 8, 0.45);
+}
+.screen--landing .choice-card:hover {
+  box-shadow: 0 26px 44px -16px rgba(60, 10, 8, 0.5), 0 0 0 3px color-mix(in srgb, var(--card-accent) 45%, transparent);
+}
+
+/* ---------------------------------------------------------
+   Back button
+--------------------------------------------------------- */
+.back-btn {
+  position: absolute;
+  top: -3.2rem;
+  left: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  background: none;
+  border: none;
+  color: var(--ink-soft);
+  font-size: 0.9rem;
+  font-weight: 500;
+  padding: 0.4rem 0.2rem;
+  border-radius: 8px;
+}
+
+.back-btn:hover { color: var(--accent); }
+.back-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* ---------------------------------------------------------
+   Cookie stage
+--------------------------------------------------------- */
+.waiting-text {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-size: clamp(1.2rem, 3.2vw, 1.5rem);
+  color: var(--ink-soft);
+  margin: 1.2rem 0 2.6rem;
+}
+
+.cookie-stage {
+  position: relative;
+  width: 100%;
+  height: 260px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 2.4rem;
+}
+
+.cookie {
+  position: relative;
+  width: 230px;
+  height: 130px;
+  touch-action: none;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: transform 160ms var(--ease);
+}
+
+.cookie:focus-visible {
+  outline: none;
+}
+
+.cookie:focus-visible::after {
+  content: "";
+  position: absolute;
+  inset: -10px;
+  border: 2px solid var(--accent);
+  border-radius: 130px / 90px;
+  pointer-events: none;
+}
+
+.cookie.pressed:not(.cracked) {
+  transform: scale(0.97);
+}
+
+.cookie-half {
+  position: absolute;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  background:
+    radial-gradient(120% 140% at 30% 20%, rgba(255,255,255,0.35), transparent 55%),
+    linear-gradient(155deg, var(--cookie-light), var(--cookie-mid) 55%, var(--cookie-dark));
+  transition: transform 700ms var(--ease), opacity 500ms var(--ease);
+}
+
+.cookie.dragging .cookie-half {
+  transition: none;
+}
+
+.cookie-half--left {
+  left: 0;
+  border-radius: 130px 20px 20px 130px / 90px 60px 60px 90px;
+  clip-path: inset(0 50% 0 0);
+  transform-origin: 15% 50%;
+  box-shadow: inset 0 -10px 18px rgba(124, 78, 29, 0.35);
+}
+
+.cookie-half--right {
+  right: 0;
+  border-radius: 20px 130px 130px 20px / 60px 90px 90px 60px;
+  clip-path: inset(0 0 0 50%);
+  transform-origin: 85% 50%;
+  box-shadow: inset 0 -10px 18px rgba(124, 78, 29, 0.35);
+}
+
+.cookie::before {
+  content: "";
+  position: absolute;
+  left: 4%;
+  right: 4%;
+  bottom: -10px;
+  top: 6%;
+  border-radius: 130px / 90px;
+  box-shadow: var(--shadow-deep);
+  z-index: -1;
+  transition: opacity 500ms var(--ease);
+}
+
+.cookie.cracked::before {
+  opacity: 0;
+}
+
+.crack-line {
+  position: absolute;
+  left: 50%;
+  top: 8%;
+  height: 84%;
+  width: 3px;
+  transform: translateX(-50%) scaleY(0);
+  transform-origin: center;
+  background: linear-gradient(var(--cookie-shadow), var(--cookie-dark), var(--cookie-shadow));
+  border-radius: 2px;
+  opacity: 0;
+  transition: transform 260ms var(--ease), opacity 260ms var(--ease);
+  z-index: 2;
+}
+
+.paper {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 150px;
+  transform: translate(-50%, -46%) scaleY(0.2);
+  transform-origin: bottom center;
+  background: var(--paper);
+  border: 1px solid var(--paper-line);
+  border-top: 3px solid var(--accent);
+  border-radius: 4px;
+  padding: 0.9rem 0.8rem;
+  box-shadow: 0 12px 28px -10px rgba(60, 35, 10, 0.35);
+  opacity: 0;
+  z-index: 1;
+  transition: transform 620ms 220ms var(--ease), opacity 400ms 220ms var(--ease), border-color 400ms ease;
+}
+
+.paper-text {
+  margin: 0;
+  font-family: var(--font-display);
+  font-style: italic;
+  font-size: 0.92rem;
+  line-height: 1.5;
+  color: var(--ink);
+  opacity: 0;
+  transition: opacity 500ms 520ms ease;
+}
+
+/* Cracked state */
+.cookie.cracked .cookie-half--left {
+  transform: translate(-64px, 10px) rotate(-22deg);
+}
+.cookie.cracked .cookie-half--right {
+  transform: translate(64px, 10px) rotate(22deg);
+}
+.cookie.cracked .crack-line {
+  opacity: 0;
+}
+.cookie.cracked .paper {
+  transform: translate(-50%, -78%) scaleY(1);
+  opacity: 1;
+}
+.cookie.cracked .paper-text {
+  opacity: 1;
+}
+
+/* Pre-crack shake + crack flash */
+.cookie.shaking {
+  animation: shake 420ms ease-in-out;
+}
+.cookie.shaking .crack-line {
+  opacity: 1;
+  transform: translateX(-50%) scaleY(1);
+  transition-delay: 240ms;
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0) rotate(0); }
+  20% { transform: translateX(-4px) rotate(-1.2deg); }
+  40% { transform: translateX(4px) rotate(1.2deg); }
+  60% { transform: translateX(-3px) rotate(-0.8deg); }
+  80% { transform: translateX(3px) rotate(0.8deg); }
+}
+
+/* Crumb burst */
+.crumbs {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.crumb {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--crumb-color, var(--cookie-dark));
+  opacity: 0;
+}
+
+.crumb.pop {
+  animation: crumb-fly 650ms ease-out forwards;
+}
+
+@keyframes crumb-fly {
+  0%   { opacity: 1; transform: translate(0, 0) scale(1); }
+  100% { opacity: 0; transform: translate(var(--dx), var(--dy)) scale(0.4); }
+}
+
+/* ---------------------------------------------------------
+   Buttons
+--------------------------------------------------------- */
+.tap-hint {
+  font-family: var(--font-ui);
+  font-weight: 500;
+  font-size: 0.95rem;
+  color: var(--ink-soft);
+  margin: 0;
+  animation: hint-pulse 2.4s ease-in-out infinite;
+  transition: opacity 300ms ease;
+}
+
+.tap-hint.is-hidden {
+  opacity: 0;
+  animation: none;
+}
+
+@keyframes hint-pulse {
+  0%, 100% { opacity: 0.65; transform: translateY(0); }
+  50% { opacity: 1; transform: translateY(-2px); }
+}
+
+.reveal-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.1rem;
+  animation: rise 520ms var(--ease) both;
+}
+
+.reveal-actions[hidden] {
+  display: none;
+}
+
+.take-with {
+  font-family: var(--font-display);
+  font-style: italic;
+  color: var(--ink-soft);
+  margin: 0;
+  font-size: 1.05rem;
+}
+
+.action-row {
+  display: flex;
+  gap: 0.8rem;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.ghost-btn {
+  border: 1px solid var(--paper-line);
+  background: var(--paper);
+  color: var(--ink);
+  font-weight: 500;
+  font-size: 0.92rem;
+  padding: 0.7rem 1.3rem;
+  border-radius: 999px;
+  transition: border-color 200ms ease, transform 200ms ease, box-shadow 200ms ease;
+}
+
+.ghost-btn:hover {
+  border-color: var(--accent);
+  transform: translateY(-1px);
+  box-shadow: 0 10px 20px -14px color-mix(in srgb, var(--accent) 60%, transparent);
+}
+.ghost-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+#againBtn {
+  background: linear-gradient(135deg, var(--accent), var(--accent-2));
+  color: #fff;
+  border: none;
+}
+#againBtn:hover { border-color: transparent; }
+
+.start-over {
+  background: none;
+  border: none;
+  color: var(--ink-faint);
+  font-size: 0.82rem;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  padding: 0.3rem;
+}
+
+.start-over:hover { color: var(--accent); }
+.start-over:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* ---------------------------------------------------------
+   Toast (share/copy feedback)
+--------------------------------------------------------- */
+.toast {
+  position: fixed;
+  left: 50%;
+  bottom: 2rem;
+  transform: translateX(-50%) translateY(12px);
+  background: var(--ink);
+  color: var(--paper);
+  padding: 0.65rem 1.2rem;
+  border-radius: 999px;
+  font-size: 0.85rem;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 260ms ease, transform 260ms ease;
+  z-index: 10;
+  margin: 0;
+}
+
+.toast.show {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+/* ---------------------------------------------------------
+   Responsive
+--------------------------------------------------------- */
+@media (max-width: 480px) {
+  .choice-row { gap: 0.75rem; }
+  .choice-card { padding: 1.6rem 1rem; }
+  .cookie { width: 190px; height: 110px; }
+  .cookie-stage { height: 220px; }
+  .back-btn { top: -2.6rem; }
+}
+
+@media (min-width: 720px) {
+  .screen { max-width: 680px; }
+}
+
+/* ---------------------------------------------------------
+   Reduced motion
+--------------------------------------------------------- */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
